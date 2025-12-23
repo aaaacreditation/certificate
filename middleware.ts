@@ -1,33 +1,46 @@
-import { auth } from "@/lib/auth"
 import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
+import { getToken } from "next-auth/jwt"
 
-export default auth((req) => {
-    const { nextUrl } = req
-    const isLoggedIn = !!req.auth
+export async function middleware(req: NextRequest) {
+    const { pathname } = req.nextUrl
 
-    const isAdminRoute = nextUrl.pathname.startsWith("/admin")
-    const isLoginPage = nextUrl.pathname === "/login"
-    const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth")
-    const isPublicCertificateRoute = nextUrl.pathname.startsWith("/certificate/")
+    // Define route types
+    const isAdminRoute = pathname.startsWith("/admin")
+    const isLoginPage = pathname === "/login"
+    const isApiAuthRoute = pathname.startsWith("/api/auth")
+    const isPublicCertificateRoute = pathname.startsWith("/certificate/")
+    const isPublicApiRoute = pathname.startsWith("/api/certificates") && req.method === "GET"
 
     // Allow public routes
-    if (isApiAuthRoute || isPublicCertificateRoute) {
+    if (isApiAuthRoute || isPublicCertificateRoute || isPublicApiRoute) {
         return NextResponse.next()
     }
 
+    // Check for session token
+    const token = await getToken({
+        req,
+        secret: process.env.NEXTAUTH_SECRET
+    })
+    const isLoggedIn = !!token
+
     // Redirect authenticated users away from login
     if (isLoginPage && isLoggedIn) {
-        return NextResponse.redirect(new URL("/admin", nextUrl))
+        return NextResponse.redirect(new URL("/admin", req.url))
     }
 
     // Protect admin routes
     if (isAdminRoute && !isLoggedIn) {
-        return NextResponse.redirect(new URL("/login", nextUrl))
+        return NextResponse.redirect(new URL("/login", req.url))
     }
 
     return NextResponse.next()
-})
+}
 
 export const config = {
-    matcher: ["/((?!_next/static|_next/image|favicon.ico|public/).*)"],
+    matcher: [
+        "/admin/:path*",
+        "/login",
+        "/api/certificates/:path*"
+    ],
 }
