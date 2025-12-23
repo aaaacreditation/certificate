@@ -1,0 +1,331 @@
+# AAA Accreditation Certificate Management System
+
+A comprehensive certificate management system for the American Accreditation Association (AAA) that allows administrators to create, manage, and issue digital certificates with unique shareable links.
+
+## Certificate Types Overview
+
+Based on the provided designs, the system will support 3 certificate types:
+
+````carousel
+![Individual Membership Certificate](/Users/mounirbennassar/.gemini/antigravity/brain/cdf3e50d-1b88-4308-add3-5d3db074fab7/uploaded_image_0_1765887013166.png)
+<!-- slide -->
+![Accreditation Certificate](/Users/mounirbennassar/.gemini/antigravity/brain/cdf3e50d-1b88-4308-add3-5d3db074fab7/uploaded_image_1_1765887013166.png)
+<!-- slide -->
+![Organizational Membership Certificate](/Users/mounirbennassar/.gemini/antigravity/brain/cdf3e50d-1b88-4308-add3-5d3db074fab7/uploaded_image_2_1765887013166.png)
+````
+
+### Variable Fields (Yellow - Form Input Required)
+
+| Field | Individual Membership | Accreditation | Organizational Membership |
+|-------|----------------------|---------------|---------------------------|
+| Organization Name | ✅ | ✅ | ✅ |
+| Address | ✅ | ✅ | ✅ |
+| Qualifications | ✅ | ❌ | ❌ |
+| Accredited As | ❌ | ✅ | ❌ |
+| Scope | ❌ | ✅ | ❌ |
+| Issue No. | ❌ | ✅ | ❌ |
+| Initial Accreditation Date | ❌ | ✅ | ❌ |
+
+### Static Fields (Red - Auto-generated/Configured)
+
+- Certificate Number (auto-generated)
+- Issue Date (selected from form)
+- Expiration Date (selected from form)
+- Membership/Accreditation Date
+- AAA Logo & Branding
+- Executive Director Signature
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Framework | Next.js 16 (App Router) |
+| Database | PostgreSQL |
+| ORM | Prisma |
+| Authentication | NextAuth.js |
+| Image Storage | Cloudinary |
+| Styling | Tailwind CSS 4 |
+| Certificate Generation | html-to-image / canvas |
+
+---
+
+## Proposed Changes
+
+### Database Layer
+
+#### [NEW] [schema.prisma](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/prisma/schema.prisma)
+
+```prisma
+// User model for admin authentication
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  role          Role      @default(ADMIN)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+}
+
+// Certificate model
+model Certificate {
+  id                      String           @id @default(cuid())
+  certificateNumber       String           @unique
+  type                    CertificateType
+  
+  // Common fields
+  organizationName        String
+  address                 String
+  issueDate               DateTime
+  expirationDate          DateTime
+  
+  // Individual Membership specific
+  qualifications          String?
+  membershipDate          DateTime?
+  
+  // Accreditation specific
+  accreditedAs            String?
+  scope                   String?
+  issueNo                 String?
+  initialAccreditationDate DateTime?
+  
+  // Status & Meta
+  status                  CertificateStatus @default(ACTIVE)
+  imageUrl                String?
+  publicUrl               String?           @unique
+  
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+}
+
+enum CertificateType {
+  INDIVIDUAL_MEMBERSHIP
+  ACCREDITATION
+  ORGANIZATIONAL_MEMBERSHIP
+}
+
+enum CertificateStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+  REVOKED
+}
+```
+
+---
+
+### Authentication
+
+#### [NEW] [auth.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/lib/auth.ts)
+NextAuth configuration with credentials provider for admin login.
+
+#### [NEW] [middleware.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/middleware.ts)
+Route protection for `/admin/*` paths.
+
+#### [NEW] [login/page.tsx](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/login/page.tsx)
+Elegant admin login page with branded design.
+
+---
+
+### Admin Dashboard
+
+#### [NEW] [admin/layout.tsx](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/admin/layout.tsx)
+Admin layout with sidebar navigation including:
+- Dashboard Overview
+- Certificates Management
+- Create Certificate
+- Settings
+
+#### [NEW] [admin/page.tsx](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/admin/page.tsx)
+Dashboard with statistics cards:
+- Total Certificates
+- Active Certificates
+- Paused Certificates
+- Certificates by Type
+
+#### [NEW] [admin/certificates/page.tsx](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/admin/certificates/page.tsx)
+Certificate list with:
+- Search & filter functionality
+- Status badges
+- Quick actions (view, edit, pause, delete)
+- Pagination
+
+#### [NEW] [admin/certificates/new/page.tsx](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/admin/certificates/new/page.tsx)
+Enhanced certificate creation form with:
+- Certificate type selector (3 elegant cards)
+- Dynamic form fields based on type
+- Real-time preview
+- Date pickers with validation
+
+#### [NEW] [admin/certificates/[id]/page.tsx](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/admin/certificates/[id]/page.tsx)
+Certificate detail view and edit page.
+
+---
+
+### API Routes
+
+#### [NEW] [api/certificates/route.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/api/certificates/route.ts)
+- `GET` - List all certificates with filtering
+- `POST` - Create new certificate
+
+#### [NEW] [api/certificates/[id]/route.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/api/certificates/[id]/route.ts)
+- `GET` - Get single certificate
+- `PUT` - Update certificate
+- `DELETE` - Delete certificate
+
+#### [NEW] [api/certificates/[id]/status/route.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/api/certificates/[id]/status/route.ts)
+- `PATCH` - Toggle certificate status (active/paused)
+
+#### [NEW] [api/auth/[...nextauth]/route.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/api/auth/[...nextauth]/route.ts)
+NextAuth API routes.
+
+---
+
+### Certificate Templates & Generation
+
+#### [NEW] [components/certificates/](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/components/certificates/)
+- `IndividualMembershipTemplate.tsx`
+- `AccreditationTemplate.tsx`
+- `OrganizationalMembershipTemplate.tsx`
+- `CertificateRenderer.tsx` - Wrapper with download/share
+
+#### [NEW] [lib/certificate-generator.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/lib/certificate-generator.ts)
+Server-side certificate image generation using canvas/puppeteer.
+
+#### [NEW] [lib/cloudinary.ts](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/lib/cloudinary.ts)
+Cloudinary upload utilities.
+
+---
+
+### Public Certificate View
+
+#### [NEW] [certificate/[slug]/page.tsx](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/app/certificate/[slug]/page.tsx)
+Public-facing certificate page with:
+- Beautiful certificate display
+- Download button (PNG/PDF)
+- Share buttons (Copy link, LinkedIn, Email)
+- QR code for verification
+- Verification status badge
+
+---
+
+### UI Components
+
+#### [NEW] [components/ui/](file:///Users/mounirbennassar/Documents/clients/aaaaccreditation/components/ui/)
+Reusable UI components:
+- Button, Input, Select, DatePicker
+- Card, Badge, Modal
+- Table, Pagination
+- Toast notifications
+
+---
+
+## User Flow Diagrams
+
+```mermaid
+flowchart TD
+    A[Admin Login] --> B[Dashboard]
+    B --> C[View Certificates]
+    B --> D[Create Certificate]
+    D --> E[Select Certificate Type]
+    E --> F[Fill Form Fields]
+    F --> G[Preview Certificate]
+    G --> H[Generate & Save]
+    H --> I[Certificate Created]
+    I --> J[Unique Public URL Generated]
+    J --> K[Share/Download Options]
+    
+    C --> L[View Certificate]
+    C --> M[Edit Certificate]
+    C --> N[Pause/Activate]
+    C --> O[Delete Certificate]
+```
+
+---
+
+## Verification Plan
+
+### Automated Tests
+
+> [!NOTE]
+> We will create comprehensive tests after the core implementation is complete.
+
+1. **API Route Tests** (Jest/Vitest)
+   ```bash
+   npm run test:api
+   ```
+   - Test CRUD operations for certificates
+   - Test authentication flows
+   - Test status changes
+
+2. **Component Tests** (React Testing Library)
+   ```bash
+   npm run test:components
+   ```
+   - Test certificate forms
+   - Test certificate templates render correctly
+
+### Manual Verification
+
+1. **Authentication Flow**
+   - Navigate to `/login`
+   - Enter admin credentials
+   - Verify redirect to `/admin` dashboard
+   - Verify protected routes require authentication
+
+2. **Certificate Creation**
+   - Go to `/admin/certificates/new`
+   - Select each certificate type
+   - Fill all required fields
+   - Verify preview updates in real-time
+   - Submit and verify certificate is created
+   - Check certificate appears in list
+
+3. **Certificate Management**
+   - View certificate list at `/admin/certificates`
+   - Test search and filter
+   - Edit a certificate and verify changes saved
+   - Pause a certificate and verify status change
+   - Delete a certificate
+
+4. **Public Certificate View**
+   - Open generated public URL
+   - Verify certificate displays correctly
+   - Test download functionality
+   - Test share functionality
+   - Verify paused certificates show appropriate message
+
+5. **Cross-browser Testing**
+   - Test in Chrome, Firefox, Safari
+   - Test responsive design on mobile
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Please confirm the following before I proceed:**
+
+1. **Certificate Image Overlays**: Should I recreate the certificate templates as HTML/CSS components (fully dynamic), or would you prefer to provide base certificate images and I overlay the dynamic text on them?
+
+2. **Photo Field**: I see the old form mentioned a "Photo" field. Should we include a photo/logo upload for organizations on the certificates?
+
+3. **Certificate Number Format**: What format should certificate numbers follow? (e.g., `AAA-2024-001`, `MEM-24-0001`)
+
+4. **Validity Periods**: 
+   - Individual Membership: 2 years (as per certificate)
+   - Organizational Membership: 1 year (as per certificate)
+   - Accreditation: What validity period?
+
+5. **Additional Features**: Would you like any of these?
+   - Email notifications when certificates are created
+   - Bulk certificate creation
+   - Certificate renewal workflow
+   - Public verification API for third parties
