@@ -25,11 +25,31 @@ interface Props {
 
 export default function PublicCertificateView({ certificate }: Props) {
     const certificateRef = useRef<HTMLDivElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
     const [downloading, setDownloading] = useState(false)
     const [copied, setCopied] = useState(false)
     const [qrCode, setQrCode] = useState<string>("")
+    const [scale, setScale] = useState(0.5)
 
     const publicUrl = typeof window !== "undefined" ? window.location.href : ""
+
+    // Calculate responsive scale based on container width
+    useEffect(() => {
+        const calculateScale = () => {
+            if (containerRef.current) {
+                const containerWidth = containerRef.current.offsetWidth
+                const certificateWidth = 1024
+                const padding = 32 // Account for padding
+                const availableWidth = containerWidth - padding
+                const newScale = Math.min(availableWidth / certificateWidth, 0.7)
+                setScale(Math.max(newScale, 0.3)) // Min scale of 0.3
+            }
+        }
+
+        calculateScale()
+        window.addEventListener("resize", calculateScale)
+        return () => window.removeEventListener("resize", calculateScale)
+    }, [])
 
     // Generate QR code on mount
     useEffect(() => {
@@ -55,7 +75,6 @@ export default function PublicCertificateView({ certificate }: Props) {
                 backgroundColor: '#ffffff',
                 skipFonts: true,
                 filter: (node) => {
-                    // Skip any external stylesheet links that might cause CORS issues
                     if (node instanceof HTMLLinkElement && node.rel === 'stylesheet') {
                         return false
                     }
@@ -112,21 +131,21 @@ export default function PublicCertificateView({ certificate }: Props) {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-slate-100">
             {/* Header */}
-            <div className="bg-gradient-to-r from-slate-900 to-blue-900 text-white py-6">
+            <div className="bg-gradient-to-r from-slate-900 to-blue-900 text-white py-4 md:py-6">
                 <div className="max-w-6xl mx-auto px-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                                <Shield className="w-6 h-6 text-white" />
+                            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <Shield className="w-5 h-5 md:w-6 md:h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="font-bold text-lg">American Accreditation Association</h1>
-                                <p className="text-blue-200 text-sm">Certificate Verification</p>
+                                <h1 className="font-bold text-base md:text-lg">American Accreditation Association</h1>
+                                <p className="text-blue-200 text-xs md:text-sm">Certificate Verification</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5 text-emerald-400" />
-                            <span className="text-sm font-medium">
+                        <div className="flex items-center gap-2 ml-13 sm:ml-0">
+                            <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" />
+                            <span className="text-xs md:text-sm font-medium">
                                 {isExpired ? (
                                     <span className="text-red-400">Expired</span>
                                 ) : (
@@ -138,14 +157,67 @@ export default function PublicCertificateView({ certificate }: Props) {
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="max-w-6xl mx-auto px-3 md:px-4 py-4 md:py-8">
+                {/* Mobile: Actions first */}
+                <div className="lg:hidden mb-4 space-y-3">
+                    {/* Quick Action Buttons */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleDownload}
+                            disabled={downloading}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all disabled:opacity-50 text-sm"
+                        >
+                            {downloading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Download className="w-4 h-4" />
+                            )}
+                            Download
+                        </button>
+                        <button
+                            onClick={handleCopyLink}
+                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-slate-100 text-slate-700 font-medium rounded-xl hover:bg-slate-200 transition-all text-sm"
+                        >
+                            {copied ? (
+                                <>
+                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                    Copied!
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="w-4 h-4" />
+                                    Copy Link
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Share Buttons */}
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleShareLinkedIn}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#0077b5] text-white rounded-xl hover:bg-[#006699] transition-colors text-sm"
+                        >
+                            <Linkedin className="w-4 h-4" />
+                            LinkedIn
+                        </button>
+                        <button
+                            onClick={handleShareEmail}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-700 text-white rounded-xl hover:bg-slate-800 transition-colors text-sm"
+                        >
+                            <Mail className="w-4 h-4" />
+                            Email
+                        </button>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
                     {/* Certificate Display */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 order-2 lg:order-1">
                         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                            <div className="p-4 bg-slate-50 border-b border-slate-100">
-                                <div className="flex items-center justify-between">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${certificate.type === "INDIVIDUAL_MEMBERSHIP"
+                            <div className="p-3 md:p-4 bg-slate-50 border-b border-slate-100">
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${certificate.type === "INDIVIDUAL_MEMBERSHIP"
                                         ? "bg-purple-100 text-purple-700"
                                         : certificate.type === "ACCREDITATION"
                                             ? "bg-blue-100 text-blue-700"
@@ -153,7 +225,7 @@ export default function PublicCertificateView({ certificate }: Props) {
                                         }`}>
                                         {getCertificateTypeName(certificate.type)}
                                     </span>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${isExpired
+                                    <span className={`px-2 md:px-3 py-1 rounded-full text-xs font-medium ${isExpired
                                         ? "bg-red-100 text-red-700"
                                         : "bg-emerald-100 text-emerald-700"
                                         }`}>
@@ -161,11 +233,14 @@ export default function PublicCertificateView({ certificate }: Props) {
                                     </span>
                                 </div>
                             </div>
-                            <div className="p-6 overflow-x-auto">
+                            <div ref={containerRef} className="p-2 md:p-6 overflow-hidden flex justify-center">
                                 <div
                                     ref={certificateRef}
-                                    className="inline-block"
-                                    style={{ transform: "scale(0.65)", transformOrigin: "top left" }}
+                                    style={{
+                                        transform: `scale(${scale})`,
+                                        transformOrigin: "top center",
+                                        height: `${723 * scale}px`
+                                    }}
                                 >
                                     {renderTemplate()}
                                 </div>
@@ -173,8 +248,8 @@ export default function PublicCertificateView({ certificate }: Props) {
                         </div>
                     </div>
 
-                    {/* Sidebar */}
-                    <div className="space-y-6">
+                    {/* Sidebar - Desktop only */}
+                    <div className="hidden lg:block space-y-6 order-1 lg:order-2">
                         {/* Certificate Info */}
                         <div className="bg-white rounded-2xl p-6 shadow-xl">
                             <h2 className="font-semibold text-slate-900 mb-4">Certificate Details</h2>
@@ -258,11 +333,42 @@ export default function PublicCertificateView({ certificate }: Props) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Mobile Certificate Details - Collapsible */}
+                    <div className="lg:hidden order-3">
+                        <details className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                            <summary className="p-4 cursor-pointer font-semibold text-slate-900 hover:bg-slate-50">
+                                Certificate Details
+                            </summary>
+                            <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3">
+                                <div>
+                                    <label className="text-xs text-slate-500">Organization</label>
+                                    <p className="font-medium text-slate-900 text-sm">{certificate.organizationName}</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-500">Certificate Number</label>
+                                    <p className="font-mono text-xs text-slate-900">{certificate.certificateNumber}</p>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div>
+                                        <label className="text-xs text-slate-500">Issue Date</label>
+                                        <p className="text-slate-900 text-sm">{formatCertificateDate(new Date(certificate.issueDate))}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-500">Expiration Date</label>
+                                        <p className={`text-sm ${isExpired ? "text-red-600" : "text-slate-900"}`}>
+                                            {formatCertificateDate(new Date(certificate.expirationDate))}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
                 </div>
             </div>
 
             {/* Footer */}
-            <div className="text-center py-8 text-slate-500 text-sm">
+            <div className="text-center py-6 md:py-8 text-slate-500 text-xs md:text-sm px-4">
                 <p>© {new Date().getFullYear()} American Accreditation Association. All rights reserved.</p>
             </div>
         </div>
