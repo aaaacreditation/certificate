@@ -16,7 +16,7 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
         >
             {/* Background Certificate Image */}
             <Image
-                src="/certification/membershipcertificate.png"
+                src="/certification/membershipcer.png"
                 alt="Certificate Background"
                 fill
                 className="object-fill"
