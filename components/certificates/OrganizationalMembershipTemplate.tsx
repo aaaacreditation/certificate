@@ -93,7 +93,7 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
             <div
                 className="absolute text-center"
                 style={{
-                    top: "526px",
+                    top: "521px",
                     left: "calc(50% + 242px)",
                     transform: "translateX(-50%)",
                     width: "600px",
