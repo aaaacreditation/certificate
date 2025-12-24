@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
+import Image from "next/image"
 import { Certificate } from "@prisma/client"
 import { toPng } from "html-to-image"
 import QRCode from "qrcode"
@@ -135,13 +136,13 @@ export default function PublicCertificateView({ certificate }: Props) {
                 <div className="max-w-6xl mx-auto px-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <Shield className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="font-bold text-base md:text-lg">American Accreditation Association</h1>
-                                <p className="text-blue-200 text-xs md:text-sm">Certificate Verification</p>
-                            </div>
+                            <Image
+                                src="/AAA-Logo.png"
+                                alt="American Accreditation Association"
+                                width={150}
+                                height={50}
+                                className="h-10 md:h-12 w-auto"
+                            />
                         </div>
                         <div className="flex items-center gap-2 ml-13 sm:ml-0">
                             <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-emerald-400" />
