@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { CertificateType } from "@prisma/client"
+import { generatePublicSlug } from "@/lib/utils"
 
 // GET - Get a single certificate
 export async function GET(
@@ -61,6 +62,17 @@ export async function PUT(
             status,
         } = body
 
+        // Get current certificate to check if org name changed
+        const existingCertificate = await prisma.certificate.findUnique({
+            where: { id },
+            select: { organizationName: true }
+        })
+
+        // Regenerate slug if organization name changed
+        const newSlug = organizationName && organizationName !== existingCertificate?.organizationName
+            ? generatePublicSlug(organizationName)
+            : undefined
+
         const certificate = await prisma.certificate.update({
             where: { id },
             data: {
@@ -78,6 +90,7 @@ export async function PUT(
                     ? new Date(initialAccreditationDate)
                     : null,
                 status,
+                ...(newSlug && { publicSlug: newSlug }),
             },
         })
 
