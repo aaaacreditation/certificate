@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
 
         // Generate unique certificate number and public slug
         const certificateNumber = generateCertificateNumber(type as CertificateType)
-        const publicSlug = generatePublicSlug()
+        const publicSlug = generatePublicSlug(organizationName)
 
         const certificate = await prisma.certificate.create({
             data: {

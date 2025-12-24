@@ -21,8 +21,21 @@ export function generateCertificateNumber(type: CertificateType): string {
 /**
  * Generate a unique public slug for certificate URLs
  */
-export function generatePublicSlug(): string {
-    return nanoid(12)
+export function generatePublicSlug(organizationName?: string): string {
+    if (!organizationName) {
+        return nanoid(12)
+    }
+
+    // Convert to lowercase and replace non-alphanumeric chars with hyphens
+    const slug = organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+
+    // Append minimal random suffix for uniqueness
+    const suffix = nanoid(6)
+
+    return `${slug}-${suffix}`
 }
 
 /**
