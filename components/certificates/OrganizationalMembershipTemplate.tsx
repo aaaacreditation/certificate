@@ -106,22 +106,7 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
                 {formatCertificateDate(new Date(certificate.issueDate))}
             </div>
 
-            {/* Validity Period - Calculated from dates */}
-            <div
-                className="absolute text-center"
-                style={{
-                    top: "540px",
-                    left: "calc(50% + 30px)",
-                    transform: "translateX(-50%)",
-                    width: "600px",
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                    color: "#1a365d",
-                    fontFamily: "var(--font-poppins), sans-serif"
-                }}
-            >
-                {new Date(certificate.expirationDate).getFullYear() - new Date(certificate.issueDate).getFullYear()} {new Date(certificate.expirationDate).getFullYear() - new Date(certificate.issueDate).getFullYear() > 1 ? "Years" : "Year"}
-            </div>
+
 
             {/* STEP 3: QR Code - Inside the red square border on the left */}
             {qrCodeUrl && (
