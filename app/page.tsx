@@ -111,7 +111,7 @@ export default function Home() {
     if (!certificate) return null
     switch (certificate.type) {
       case "INDIVIDUAL_MEMBERSHIP":
-        return <IndividualMembershipTemplate certificate={certificate} />
+        return <IndividualMembershipTemplate certificate={certificate} qrCodeUrl={qrCode} />
       case "ACCREDITATION":
         return <AccreditationTemplate certificate={certificate} qrCodeUrl={qrCode} />
       case "ORGANIZATIONAL_MEMBERSHIP":

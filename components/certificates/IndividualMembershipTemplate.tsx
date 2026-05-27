@@ -3,9 +3,10 @@ import { formatCertificateDate } from "@/lib/utils"
 
 interface Props {
     certificate: Certificate
+    qrCodeUrl?: string
 }
 
-export default function IndividualMembershipTemplate({ certificate }: Props) {
+export default function IndividualMembershipTemplate({ certificate, qrCodeUrl }: Props) {
     return (
         <div
             id="certificate-template"
@@ -119,6 +120,12 @@ export default function IndividualMembershipTemplate({ certificate }: Props) {
                         </span>
                     </div>
                 </div>
+
+                {qrCodeUrl && (
+                    <div className="border-2 border-red-800 p-2 bg-white">
+                        <img src={qrCodeUrl} alt="QR Code" className="w-24 h-24" />
+                    </div>
+                )}
 
                 {/* Signature */}
                 <div className="text-center border-2 border-slate-200 rounded-lg p-4">

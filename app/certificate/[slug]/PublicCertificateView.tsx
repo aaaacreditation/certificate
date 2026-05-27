@@ -22,17 +22,16 @@ import { formatCertificateDate, getCertificateTypeName } from "@/lib/utils"
 
 interface Props {
     certificate: Certificate
+    publicUrl: string
 }
 
-export default function PublicCertificateView({ certificate }: Props) {
+export default function PublicCertificateView({ certificate, publicUrl }: Props) {
     const certificateRef = useRef<HTMLDivElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const [downloading, setDownloading] = useState(false)
     const [copied, setCopied] = useState(false)
     const [qrCode, setQrCode] = useState<string>("")
     const [scale, setScale] = useState(0.5)
-
-    const publicUrl = typeof window !== "undefined" ? window.location.href : ""
 
     // Calculate responsive scale based on container width
     useEffect(() => {
@@ -117,7 +116,7 @@ export default function PublicCertificateView({ certificate }: Props) {
     const renderTemplate = () => {
         switch (certificate.type) {
             case "INDIVIDUAL_MEMBERSHIP":
-                return <IndividualMembershipTemplate certificate={certificate} />
+                return <IndividualMembershipTemplate certificate={certificate} qrCodeUrl={qrCode} />
             case "ACCREDITATION":
                 return <AccreditationTemplate certificate={certificate} qrCodeUrl={qrCode} />
             case "ORGANIZATIONAL_MEMBERSHIP":

@@ -8,6 +8,8 @@ interface Props {
 }
 
 export default function AccreditationTemplate({ certificate, qrCodeUrl }: Props) {
+    const displayCertificateNumber = certificate.issueNo?.trim() || certificate.certificateNumber
+
     return (
         <div
             id="certificate-template"
@@ -16,11 +18,21 @@ export default function AccreditationTemplate({ certificate, qrCodeUrl }: Props)
         >
             {/* Background Certificate Image */}
             <Image
-                src="/certification/orgaccreditation.png"
+                src="/certificates/accreditation-template.jpg"
                 alt="Certificate Background"
                 fill
                 className="object-fill"
                 priority
+            />
+
+            <div
+                className="absolute bg-white"
+                style={{
+                    top: "430px",
+                    left: "245px",
+                    width: "560px",
+                    height: "160px"
+                }}
             />
 
             {/* Certificate No - Immediately under Accreditation Certificate title */}
@@ -36,7 +48,7 @@ export default function AccreditationTemplate({ certificate, qrCodeUrl }: Props)
                     fontFamily: "var(--font-poppins), sans-serif"
                 }}
             >
-                CERTIFICATE NO: {certificate.issueNo}
+                CERTIFICATE NO: {displayCertificateNumber}
             </div>
 
             {/* STEP 1: Organization Name */}
@@ -72,6 +84,42 @@ export default function AccreditationTemplate({ certificate, qrCodeUrl }: Props)
                 {certificate.address}
             </div>
 
+            {certificate.accreditedAs && (
+                <div
+                    className="absolute text-center"
+                    style={{
+                        top: "448px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "620px",
+                        fontSize: "22px",
+                        fontWeight: "700",
+                        color: "#1a365d",
+                        fontFamily: "var(--font-dm-serif), serif"
+                    }}
+                >
+                    As {certificate.accreditedAs}
+                </div>
+            )}
+
+            {certificate.scope && (
+                <div
+                    className="absolute text-center whitespace-pre-line"
+                    style={{
+                        top: "492px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "620px",
+                        fontSize: "14px",
+                        lineHeight: "1.35",
+                        color: "#111827",
+                        fontFamily: "var(--font-open-sans), sans-serif"
+                    }}
+                >
+                    {certificate.scope}
+                </div>
+            )}
+
             {/* STEP 3: QR Code - Inside the red square border on the left */}
             {qrCodeUrl && (
                 <div
@@ -88,6 +136,20 @@ export default function AccreditationTemplate({ certificate, qrCodeUrl }: Props)
             )}
 
             {/* STEP 4: Issue Date - Beside label in bottom left */}
+            <div
+                className="absolute font-medium"
+                style={{
+                    top: "611px",
+                    left: "124px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#1a365d",
+                    fontFamily: "var(--font-dm-serif), serif"
+                }}
+            >
+                {displayCertificateNumber}
+            </div>
+
             <div
                 className="absolute font-medium"
                 style={{
@@ -116,6 +178,22 @@ export default function AccreditationTemplate({ certificate, qrCodeUrl }: Props)
             >
                 {formatCertificateDate(new Date(certificate.expirationDate))}
             </div>
+
+            {certificate.initialAccreditationDate && (
+                <div
+                    className="absolute font-medium"
+                    style={{
+                        top: "651px",
+                        left: "585px",
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        color: "#1a365d",
+                        fontFamily: "var(--font-dm-serif), serif"
+                    }}
+                >
+                    {formatCertificateDate(new Date(certificate.initialAccreditationDate))}
+                </div>
+            )}
 
         </div>
     )

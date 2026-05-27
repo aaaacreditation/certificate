@@ -4,6 +4,20 @@ import { auth } from "@/lib/auth"
 import { generateCertificateNumber, generatePublicSlug } from "@/lib/utils"
 import { CertificateType } from "@prisma/client"
 
+function cleanString(value: unknown): string | null {
+    if (typeof value !== "string") return null
+
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : null
+}
+
+function parseDate(value: unknown): Date | null {
+    if (typeof value !== "string" || value.trim().length === 0) return null
+
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? null : date
+}
+
 // GET - List all certificates with filtering
 export async function GET(request: NextRequest) {
     try {
@@ -13,7 +27,10 @@ export async function GET(request: NextRequest) {
         }
 
         const searchParams = request.nextUrl.searchParams
-        const type = searchParams.get("type") as CertificateType | null
+        const rawType = searchParams.get("type")
+        const type = Object.values(CertificateType).includes(rawType as CertificateType)
+            ? (rawType as CertificateType)
+            : null
         const status = searchParams.get("status")
         const search = searchParams.get("search")
         const page = parseInt(searchParams.get("page") || "1")
@@ -82,33 +99,58 @@ export async function POST(request: NextRequest) {
         } = body
 
         // Validate required fields
-        if (!type || !organizationName || !address || !issueDate || !expirationDate) {
+        const certificateType = Object.values(CertificateType).includes(type)
+            ? (type as CertificateType)
+            : null
+        const cleanedOrganizationName = cleanString(organizationName)
+        const cleanedAddress = cleanString(address)
+        const parsedIssueDate = parseDate(issueDate)
+        const parsedExpirationDate = parseDate(expirationDate)
+
+        if (!certificateType || !cleanedOrganizationName || !cleanedAddress || !parsedIssueDate || !parsedExpirationDate) {
             return NextResponse.json(
                 { error: "Missing required fields" },
                 { status: 400 }
             )
         }
 
+        if (parsedExpirationDate <= parsedIssueDate) {
+            return NextResponse.json(
+                { error: "Expiration date must be after the issue date" },
+                { status: 400 }
+            )
+        }
+
+        const cleanedAccreditedAs = cleanString(accreditedAs)
+        const cleanedScope = cleanString(scope)
+
+        if (certificateType === "ACCREDITATION" && (!cleanedAccreditedAs || !cleanedScope)) {
+            return NextResponse.json(
+                { error: "Accredited as and scope are required for accreditation certificates" },
+                { status: 400 }
+            )
+        }
+
         // Generate unique certificate number and public slug
-        const certificateNumber = generateCertificateNumber(type as CertificateType)
-        const publicSlug = generatePublicSlug(organizationName)
+        const certificateNumber = generateCertificateNumber(certificateType)
+        const publicSlug = generatePublicSlug(cleanedOrganizationName)
 
         const certificate = await prisma.certificate.create({
             data: {
                 certificateNumber,
                 publicSlug,
-                type: type as CertificateType,
-                organizationName,
-                address,
-                issueDate: new Date(issueDate),
-                expirationDate: new Date(expirationDate),
-                qualifications,
-                membershipDate: membershipDate ? new Date(membershipDate) : null,
-                accreditedAs,
-                scope,
-                issueNo,
-                initialAccreditationDate: initialAccreditationDate
-                    ? new Date(initialAccreditationDate)
+                type: certificateType,
+                organizationName: cleanedOrganizationName,
+                address: cleanedAddress,
+                issueDate: parsedIssueDate,
+                expirationDate: parsedExpirationDate,
+                qualifications: certificateType === "INDIVIDUAL_MEMBERSHIP" ? cleanString(qualifications) : null,
+                membershipDate: certificateType !== "ACCREDITATION" ? parseDate(membershipDate) : null,
+                accreditedAs: certificateType === "ACCREDITATION" ? cleanedAccreditedAs : null,
+                scope: certificateType !== "INDIVIDUAL_MEMBERSHIP" ? cleanedScope : null,
+                issueNo: certificateType !== "INDIVIDUAL_MEMBERSHIP" ? cleanString(issueNo) : null,
+                initialAccreditationDate: certificateType === "ACCREDITATION"
+                    ? parseDate(initialAccreditationDate)
                     : null,
                 status: "ACTIVE",
             },

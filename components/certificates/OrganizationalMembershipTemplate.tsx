@@ -8,6 +8,8 @@ interface Props {
 }
 
 export default function OrganizationalMembershipTemplate({ certificate, qrCodeUrl }: Props) {
+    const displayCertificateNumber = certificate.issueNo?.trim() || certificate.certificateNumber
+
     return (
         <div
             id="certificate-template"
@@ -36,14 +38,14 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
                     fontFamily: "var(--font-poppins), sans-serif"
                 }}
             >
-                CERTIFICATE NO: {certificate.issueNo}
+                CERTIFICATE NO: {displayCertificateNumber}
             </div>
 
             {/* STEP 1: Organization Name */}
             <div
                 className="absolute text-center"
                 style={{
-                    top: "345px",
+                    top: "335px",
                     left: "50%",
                     transform: "translateX(-50%)",
                     width: "600px",
@@ -59,7 +61,7 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
             <div
                 className="absolute text-center"
                 style={{
-                    top: "455px",
+                    top: "392px",
                     left: "50%",
                     transform: "translateX(-50%)",
                     width: "500px",
@@ -72,22 +74,24 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
                 {certificate.address}
             </div>
 
-            {/* Scope - Immediately under 'Has gained...' text */}
-            <div
-                className="absolute text-center"
-                style={{
-                    top: "470px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: "600px",
-                    fontSize: "16px",
-                    fontWeight: "normal",
-                    color: "#1a365d",
-                    fontFamily: "var(--font-poppins), sans-serif"
-                }}
-            >
-                {certificate.scope}
-            </div>
+            {certificate.scope && (
+                <div
+                    className="absolute text-center whitespace-pre-line"
+                    style={{
+                        top: "430px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        width: "600px",
+                        fontSize: "15px",
+                        lineHeight: "1.35",
+                        fontWeight: "500",
+                        color: "#1a365d",
+                        fontFamily: "var(--font-poppins), sans-serif"
+                    }}
+                >
+                    {certificate.scope}
+                </div>
+            )}
 
             {/* Issue Date - Beside "Has gained the Organizational Membership on" */}
             <div
@@ -103,7 +107,7 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
                     fontFamily: "var(--font-dm-serif), serif"
                 }}
             >
-                {formatCertificateDate(new Date(certificate.issueDate))}
+                {formatCertificateDate(new Date(certificate.membershipDate || certificate.issueDate))}
             </div>
 
 
@@ -122,6 +126,21 @@ export default function OrganizationalMembershipTemplate({ certificate, qrCodeUr
                     <img src={qrCodeUrl} alt="QR Code" className="w-full h-full" />
                 </div>
             )}
+
+            {/* Certificate number - Beside label in bottom left */}
+            <div
+                className="absolute font-medium"
+                style={{
+                    top: "611px",
+                    left: "124px",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "#1a365d",
+                    fontFamily: "var(--font-dm-serif), serif"
+                }}
+            >
+                {displayCertificateNumber}
+            </div>
 
             {/* STEP 4: Issue Date - Beside label in bottom left */}
             <div

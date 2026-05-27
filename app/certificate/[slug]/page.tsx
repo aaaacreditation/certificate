@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import prisma from "@/lib/prisma"
+import { getCertificatePublicUrl } from "@/lib/urls"
 import PublicCertificateView from "./PublicCertificateView"
 
 export default async function PublicCertificatePage({
@@ -49,5 +50,10 @@ export default async function PublicCertificatePage({
         )
     }
 
-    return <PublicCertificateView certificate={certificate} />
+    return (
+        <PublicCertificateView
+            certificate={certificate}
+            publicUrl={getCertificatePublicUrl(certificate.publicSlug)}
+        />
+    )
 }

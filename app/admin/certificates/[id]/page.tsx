@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import prisma from "@/lib/prisma"
 import { formatCertificateDate, getCertificateTypeName } from "@/lib/utils"
+import { getCertificatePublicUrl } from "@/lib/urls"
 import {
     ArrowLeft,
     Edit,
@@ -32,7 +33,7 @@ export default async function CertificateDetailPage({
         notFound()
     }
 
-    const publicUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/certificate/${certificate.publicSlug}`
+    const publicUrl = getCertificatePublicUrl(certificate.publicSlug)
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
