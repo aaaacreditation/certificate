@@ -58,11 +58,32 @@ export default function PublicCertificateView({ certificate, publicUrl }: Props)
         }
     }, [publicUrl])
 
+    const waitForCertificateImages = async (node: HTMLElement) => {
+        const images = Array.from(node.querySelectorAll("img"))
+        await Promise.all(
+            images.map(async (image) => {
+                if (image.complete && image.naturalWidth > 0) {
+                    if ("decode" in image) {
+                        await image.decode().catch(() => undefined)
+                    }
+                    return
+                }
+
+                await new Promise<void>((resolve) => {
+                    image.addEventListener("load", () => resolve(), { once: true })
+                    image.addEventListener("error", () => resolve(), { once: true })
+                })
+            })
+        )
+    }
+
     const handleDownload = async () => {
         if (!certificateRef.current) return
 
         setDownloading(true)
         try {
+            await waitForCertificateImages(certificateRef.current)
+
             const dataUrl = await toPng(certificateRef.current, {
                 quality: 1.0,
                 pixelRatio: 2,

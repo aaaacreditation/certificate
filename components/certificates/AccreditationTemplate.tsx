@@ -1,6 +1,5 @@
 import { Certificate } from "@prisma/client"
 import { formatCertificateDate } from "@/lib/utils"
-import Image from "next/image"
 
 interface Props {
     certificate: Certificate
@@ -17,12 +16,12 @@ export default function AccreditationTemplate({ certificate, qrCodeUrl }: Props)
             style={{ width: "1024px", height: "723px" }}
         >
             {/* Background Certificate Image */}
-            <Image
+            <img
                 src="/certificates/accreditation-template.jpg"
                 alt="Certificate Background"
-                fill
-                className="object-fill"
-                priority
+                className="absolute inset-0 h-full w-full object-fill"
+                width={1024}
+                height={723}
             />
 
             <div

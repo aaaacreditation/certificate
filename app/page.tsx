@@ -35,6 +35,25 @@ export default function Home() {
   const [downloading, setDownloading] = useState(false)
   const certificateRef = useRef<HTMLDivElement>(null)
 
+  const waitForCertificateImages = async (node: HTMLElement) => {
+    const images = Array.from(node.querySelectorAll("img"))
+    await Promise.all(
+      images.map(async (image) => {
+        if (image.complete && image.naturalWidth > 0) {
+          if ("decode" in image) {
+            await image.decode().catch(() => undefined)
+          }
+          return
+        }
+
+        await new Promise<void>((resolve) => {
+          image.addEventListener("load", () => resolve(), { once: true })
+          image.addEventListener("error", () => resolve(), { once: true })
+        })
+      })
+    )
+  }
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim() || query.trim().length < 2) return
@@ -69,6 +88,8 @@ export default function Home() {
     if (!certificateRef.current) return
     setDownloading(true)
     try {
+      await waitForCertificateImages(certificateRef.current)
+
       const dataUrl = await toPng(certificateRef.current, {
         quality: 1.0,
         pixelRatio: 2,
